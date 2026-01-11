@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indian Post Inland Letter Card</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Noto+Sans+Devanagari:wght@400;700&family=Arial+Narrow:wght@400;700&display=swap');
+
+        :root {
+            /* Colors */
+            --ilc-blue: #D0E4F5;
+            /* Fresh Mint Blue from reference */
+            --ilc-blue-dark: #B3E5FC;
+            --ilc-ink-blue: #004085;
+            /* Deep, professional ink blue */
+            --ilc-red: #B71C1C;
+            /* Darker red for perforation warnings */
+
+            /* Dimensions */
+            --letter-width: 90vw;
+            --panel-height: calc(var(--letter-width) * 0.6875);
+            /* Aspect ratio roughly maintained */
+            --flap-size: 35px;
+
+            /* Fonts */
+            --font-hindi: 'Noto Sans Devanagari', sans-serif;
+            --font-english: 'Courier Prime', monospace;
+            --font-narrow: 'Arial Narrow', sans-serif;
+        }
+
+        body {
+            background-color: #333;
+            /* Dark background enhances the mint blue */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: var(--font-english);
+            overflow-x: hidden;
+        }
+
+        /* Mobile Reading Mode Adjustments */
+        @media (max-width: 600px) {
+            .reading-mode body {
+                background-color: #F0F8FF;
+                align-items: flex-start;
+            }
+
+            .reading-mode .scene {
+                width: 100%;
+                margin: 0;
+            }
+
+            .reading-mode .panel {
+                padding: 20px;
+                width: 100% !important;
+                box-sizing: border-box;
+            }
+        }
+
+        /* 3D Scene Setup */
+        .scene {
+            width: var(--letter-width);
+            height: var(--panel-height);
+            perspective: 2500px;
+            position: relative;
+            transition: height 0.5s ease;
+        }
+
+        .letter {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1s ease-in-out;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Paper Material & Texture - Mint Condition */
+        .paper {
+            background-color: var(--ilc-blue);
+            /* Very subtle grain */
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' opacity='0.5' stapitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E");
+            color: var(--ilc-ink-blue);
+        }
+
+        /* Panels */
+        .panel {
+            width: 100%;
+            height: var(--panel-height);
+            position: absolute;
+            top: 0;
+            left: 0;
+            backface-visibility: hidden;
+            transform-style: preserve-3d;
+            box-sizing: border-box;
+            padding: 20px;
+        }
+
+        /* Zone 1: Front Address Panel */
+        .panel-top {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform-origin: top center;
+            transform: rotateX(0deg);
+            z-index: 20;
+            backface-visibility: hidden;
+            transition: transform 1.2s ease-in-out;
+        }
+
+        /* Zone 2: Middle Panel */
+        .panel-middle {
+            top: 0;
+            z-index: 5;
+            display: block;
+            transform-origin: top;
+            position: relative;
+            height: var(--panel-height);
+        }
+
+        /* Zone 3: Bottom Panel */
+        .panel-bottom {
+            position: absolute;
+            top: var(--panel-height);
+            left: 0;
+            display: block;
+            transform-origin: top center;
+            transform: rotateX(-179deg);
+            /* Folded UP */
+            z-index: 15;
+            backface-visibility: hidden;
+            transition: transform 1.2s ease-in-out;
+            background-color: var(--ilc-blue);
+        }
+
+        /* Typography */
+        .header {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 25px;
+            margin-top: 15px;
+            margin-left: 20px;
+        }
+
+        .header-text {
+            font-family: var(--font-hindi);
+            font-size: 0.9rem;
+            font-weight: 700;
+            line-height: 1.2;
+            color: var(--ilc-ink-blue);
+        }
+
+        .header-text span {
+            display: block;
+            font-family: var(--font-narrow);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: normal;
+            letter-spacing: 0.5px;
+        }
+
+        .stamp-box {
+            width: 70px;
+            position: absolute;
+            top: 45px;
+            right: 50px;
+            mix-blend-mode: multiply;
+            opacity: 0.9;
+        }
+
+        .stamp-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Interactive Strips - Perforation Style */
+        .strip {
+            position: absolute;
+            cursor: pointer;
+            z-index: 30;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.01);
+            /* Invisible click area */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Cut Line (Dashed) */
+        .strip::before {
+            content: '';
+            position: absolute;
+            border-color: var(--ilc-ink-blue);
+            border-style: dashed;
+            border-width: 1px;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .strip:hover::before {
+            border-color: var(--ilc-red);
+            opacity: 1;
+        }
+
+        .strip-top {
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 35px;
+        }
+
+        /* Top line is at bottom of strip area */
+        .strip-top::before {
+            bottom: 5px;
+            left: 0;
+            right: 0;
+            border-width: 0 0 1px 0;
+        }
+
+        .strip-left {
+            top: 35px;
+            left: 0;
+            bottom: 0;
+            width: 35px;
+        }
+
+        /* Left line is at right side of strip area */
+        .strip-left::before {
+            right: 5px;
+            top: 0;
+            bottom: 0;
+            border-width: 0 1px 0 0;
+        }
+
+        .strip-right {
+            top: 35px;
+            right: 0;
+            bottom: 0;
+            width: 35px;
+        }
+
+        /* Right line is at left side of strip area */
+        .strip-right::before {
+            left: 5px;
+            top: 0;
+            bottom: 0;
+            border-width: 0 0 0 1px;
+        }
+
+        .strip-text {
+            color: var(--ilc-red);
+            /* Often text is same ink blue, but red warning is common too. Reference has faint text. Let's stick to instruction red but small */
+            font-size: 0.5rem;
+            font-family: var(--font-narrow);
+            position: absolute;
+            white-space: nowrap;
+            text-transform: uppercase;
+        }
+
+        /* Text Placement */
+        .strip-top .strip-text {
+            bottom: 10px;
+            /* Sits on top of the dashed line */
+        }
+
+        .strip-left .strip-text {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-90deg);
+        }
+
+        .strip-right .strip-text {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(90deg);
+        }
+
+        /* Address Lines */
+        .address-area {
+            position: absolute;
+            top: 55%;
+            left: 55%;
+            transform: translate(-50%, -50%);
+            width: 60%;
+            pointer-events: none;
+        }
+
+        .address-line {
+            border-bottom: 1px solid var(--ilc-ink-blue);
+            height: 35px;
+            margin-bottom: 5px;
+            font-family: 'Courier Prime', monospace;
+            color: #222;
+            display: flex;
+            align-items: flex-end;
+            padding-left: 10px;
+            font-size: 1rem;
+        }
+
+        .pin-grid {
+            display: flex;
+            gap: 0;
+            position: absolute;
+            bottom: 60px;
+            right: 45px;
+        }
+
+        .pin-box {
+            width: 25px;
+            height: 32px;
+            border: 1px solid var(--ilc-ink-blue);
+            border-right: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Courier Prime', monospace;
+            font-size: 1rem;
+            color: #333;
+        }
+
+        .pin-box:last-child {
+            border-right: 1px solid var(--ilc-ink-blue);
+        }
+
+        .footer-warning {
+            position: absolute;
+            bottom: 15px;
+            right: 40px;
+            font-size: 0.5rem;
+            width: 220px;
+            text-align: center;
+            color: var(--ilc-ink-blue);
+            opacity: 0.8;
+            line-height: 1.1;
+        }
+
+        /* Tearing interaction styles */
+        .strip.torn {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+
+        .overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+            cursor: pointer;
+        }
+
+        .open-btn {
+            background: #fff;
+            padding: 10px 20px;
+            font-weight: bold;
+            color: var(--ilc-ink-blue);
+            border-radius: 4px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Reading Mode */
+        /* Reading Mode */
+        .reading-mode .letter {
+            transform: none !important;
+            display: flex;
+            flex-direction: column;
+            box-shadow: none;
+            height: auto !important;
+            /* Forces container to grow */
+            width: 100%;
+            max-width: 800px;
+            /* Limit max width on desktop reading mode */
+            margin: 0 auto;
+        }
+
+        .reading-mode .panel {
+            position: relative !important;
+            transform: none !important;
+            top: auto !important;
+            left: auto !important;
+            height: auto !important;
+            min-height: var(--panel-height);
+            border: none;
+            /* darker border for contrast in reading mode */
+            border-bottom: 1px dashed #abc;
+            padding: 40px;
+            background-color: #F0F8FF;
+            /* Lighter AliceBlue for inside */
+        }
+
+        .reading-mode .panel-top {
+            order: 1;
+            display: none;
+        }
+
+        /* Hide front face in reading mode usually? Or move to top */
+        /* Actually ILC unfolds: Top (Address) -> Middle (Back of Address) -> Bottom (Folded part).
+           Let's stick to the previous reading mode logic:
+           Top Panel in reading mode is actually the "Back" of the top panel physically, but here we just re-order 
+           or hide address info. 
+           Let's hide the address panel parts opacity 0.1 but keep the paper.
+        */
+        .reading-mode .panel-top {
+            order: 1;
+            transform: rotateX(0deg);
+            display: block;
+        }
+
+        .reading-mode .panel-middle {
+            order: 2;
+            border-top: none;
+        }
+
+        .reading-mode .panel-bottom {
+            order: 3;
+        }
+
+        .reading-mode .address-area,
+        .reading-mode .stamp-box,
+        .reading-mode .header,
+        .reading-mode .pin-grid {
+            display: none;
+            /* Clean reading view */
+        }
+
+        /* Content */
+        .inner-content {
+            display: none;
+            font-family: 'Courier Prime', monospace;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #1a1a1a;
+            white-space: pre-wrap;
+        }
+
+        .reading-mode .inner-content {
+            display: block;
+        }
+
+        /* Instruction Text */
+        .instruction-highlight {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(200, 0, 0, 0.6);
+            font-size: 0.8rem;
+            font-weight: bold;
+            pointer-events: none;
+            text-align: center;
+            width: 80%;
+            z-index: 50;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            animation: fadeInOut 3s infinite;
+        }
+
+        @keyframes fadeInOut {
+
+            0%,
+            100% {
+                opacity: 0.4;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        /* Initial Reverse State */
+        .scene.initial-reverse .letter {
+            transform: rotateY(180deg);
+            transition: transform 0.8s ease-in-out;
+        }
+
+        .scene.initial-reverse .panel-top {
+            /* Faint bleed-through effect */
+            filter: opacity(0.6) blur(0.5px);
+            backface-visibility: visible;
+        }
+
+        .scene.initial-reverse .panel-top .header,
+        .scene.initial-reverse .panel-top .stamp-box,
+        .scene.initial-reverse .panel-top .address-area,
+        .scene.initial-reverse .panel-top .pin-grid {
+            /* Mirror content so it looks correct from the back? 
+                Wait, if we see the back of the element, it is already mirrored physically.
+                So we don't need to scaleX(-1) unless we wanted to UN-mirror it.
+                "Show front page but text inverted" = Physics.
+             */
+        }
+
+        /* Realistic Fold Shadows */
+        .panel::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2), transparent, rgba(0, 0, 0, 0.2));
+            opacity: 0;
+            transition: opacity 1s;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .letter.folding .panel::after {
+            opacity: 1;
+        }
+
+        /* Beautified Whatsapp Button - "Write Back" Stamp Style */
+        .whatsapp-btn {
+            display: block;
+            width: auto;
+            max-width: 200px;
+            margin: 40px auto;
+            padding: 12px 30px;
+            background: transparent;
+            color: var(--ilc-ink-blue);
+            text-align: center;
+            text-decoration: none;
+            font-family: 'Courier Prime', monospace;
+            font-weight: bold;
+            font-size: 1.1rem;
+            border: 2px solid var(--ilc-ink-blue);
+            border-radius: 2px;
+            opacity: 0;
+            transition: all 0.5s;
+            position: relative;
+            transform: rotate(-2deg);
+            box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+        }
+
+        .whatsapp-btn:hover {
+            transform: rotate(0deg) scale(1.05);
+            background: rgba(0, 51, 102, 0.05);
+            box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .whatsapp-btn.visible {
+            opacity: 1;
+            transform: translateY(0) rotate(-2deg);
+        }
+
+        .whatsapp-btn.visible:hover {
+            transform: rotate(0deg) scale(1.05);
+        }
+
+        @media (min-width: 600px) {
+            :root {
+                --letter-width: 600px;
+                --panel-height: 400px;
+                --flap-size: 40px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="scene" id="scene">
+        <div class="letter" id="letter">
+
+            <!-- Zone 2: Middle Panel (Base) -->
+            <div class="panel paper panel-middle">
+                <!-- Inside Content for Middle Panel (Visible when open) -->
+                <div class="inner-content" id="mid-content">
+                    <div
+                        style="border: 2px dashed #ccc; padding: 10px; margin-bottom: 20px; text-align: center; font-size: 0.7rem; color: #666;">
+                        दूसरा मोड़ SECOND FOLD
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zone 3: Bottom Panel (Folded Up) -->
+            <div class="panel paper panel-bottom">
+                <div class="inner-content">
+                    <div
+                        style="border: 2px dashed #ccc; padding: 10px; margin-bottom: 20px; text-align: center; font-size: 0.7rem; color: #666;">
+                        पहला मोड़ FIRST FOLD
+                    </div>
+                    <!-- Main Body Content -->
+                    <div id="letter-body">
+                        <!-- Dynamic Content injected here -->
+                    </div>
+
+                    <div class="printer-code" style="text-align: right; font-size: 0.6rem; margin-top: 30px;">
+                        प्र.मु./ S.P.P.,HYD. - 2026
+                    </div>
+
+                    <!-- Whatsapp CTA (Appended here) -->
+                    <a href="https://wa.me/+918837405788" target="_blank" class="whatsapp-btn" id="wa-btn">
+                        Click me
+                    </a>
+                    <!-- Sentinel for scroll detection -->
+                    <div id="sentinel"></div>
+                </div>
+            </div>
+
+            <!-- Zone 1: Top Panel (Front Face) -->
+            <div class="panel paper panel-top">
+
+                <!-- Perforated Strips -->
+                <div class="strip strip-top" id="strip-top" data-orientation="horizontal">
+                    <div class="strip-text">यहाँ फाड़कर खोलिए TO OPEN CUT HERE</div>
+                </div>
+                <div class="strip strip-left" id="strip-left" data-orientation="vertical">
+                    <div class="strip-text">यहाँ फाड़कर खोलिए</div>
+                </div>
+                <div class="strip strip-right" id="strip-right" data-orientation="vertical">
+                    <div class="strip-text">TO OPEN CUT HERE</div>
+                </div>
+
+                <!-- Overlay to Click Open -->
+                <div class="overlay" id="open-overlay">
+                    <div class="open-btn">Click to Open</div>
+                </div>
+
+                <!-- Main Content Zone 1 -->
+                <div class="content-wrapper" style="padding: 40px;">
+                    <div class="header">
+                        <div class="header-text">
+                            अन्तर्देशीय पत्र कार्ड सैम द्वारा
+                            <span>INLAND LETTER CARD by SAM</span>
+                        </div>
+                    </div>
+
+                    <div class="stamp-box">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/a/a7/Stamp_of_India_-_2008_-_Colnect_139939_-_Indira_Gandhi.jpeg"
+                            alt="Indira Gandhi Stamp" class="stamp-image">
+                        <!-- <div>250</div> -->
+                        <!-- <div style="font-size: 0.5rem">भारत INDIA</div> -->
+                    </div>
+
+                    <div class="address-area">
+                        <div class="address-line">A Letter to Naphi;</div>
+                        <div class="address-line">Address unknown</div>
+                        <div class="address-line"></div>
+                    </div>
+
+                    <div class="pin-grid" title="PIN CODE">
+                        <div class="pin-box">7</div>
+                        <div class="pin-box">9</div>
+                        <div class="pin-box">3</div>
+                        <div class="pin-box">0</div>
+                        <div class="pin-box">0</div>
+                        <div class="pin-box">4</div>
+                    </div>
+                    <div class="footer-warning">
+                        (इस लाइन के नीचे न तो लिखें और न ही मुद्रित करें Do not write or print below this line)
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Placeholder for dynamic content
+        const LETTER_BODY_CONTENT = `My Home,
+Shillong – 793004
+EKH, Meghalaya
+
+This 10th day of January, in the Year of 2026
+
+My Dearest Friend Naphi,
+
+I trust this letter finds thee in sound health and fair spirits. The air here in Shillong has grown sharp and bitter of late, and the cold winds wander freely through hill and hearth alike. I earnestly hope thou art well wrapped and well cared for, lest the season trouble thy constitution.
+
+It hath been a long while since we last shared discourse of any sort, cheerful or otherwise; and thus I take pen in hand, moved by affection and remembrance, to inquire after thy welfare. How fare thee, thou incorrigible simpleton? Art thou truly well? I endeavoured to reach thee by means of that curious modern contrivance known as WhatsApp, yet it seems the device hath either forsaken its duty—or perhaps conspired with thee to enjoy my discomfiture in silence.
+
+In these quieter days, my thoughts oft return to hours long past—to our jests, our mock-battles wherein we threatened grievous bodily harm only to laugh moments later, and those affections so rough in manner yet gentle in intent. Time hath carried much away, yet it hath not dulled my recollection of those moments, which now appear the brighter for their distance. Memory, I find, is a most stubborn companion, lingering where reason might bid it depart.
+
+I pray most earnestly that thy academic labours prosper, for learning hath ever been thy stronghold and thy pride. May it remain firm and unshaken. As for the wider course of life, I reckon it follows the common lot of all breathing souls, rising and falling as the tide wills it. If ever I have been a cause of unease therein, I place myself amongst the culpable; yet my wish abides unchanged—that thou be ever surrounded by kindness, especially when the world grows heavy and the spirit weary.
+
+There are those who maintain that friendship grows perilous once the heart is stirred, that truth, once spoken, lays waste to bonds formerly held secure. I cannot bring myself to submit wholly to such a belief. Rather, I am persuaded that honesty, when born of sincerity, need not undo a connection that was genuine at its root. In thy companionship I have found a rare and steady comfort, a sense of home both grounding and dear, which I cherish with an affection I shall not deny, though I refrain from naming it by any word too weighty or ill-timed.
+
+This friendship is woven too closely into the fabric of my being for me not to fear its loss or the widening of distance betwixt us. Within it, I have felt myself heard and valued, and—rarer still—at ease to be as I am, without dread of judgment. Such gifts are not lightly granted, nor easily replaced. Be assured, therefore, that I know my bounds and shall not transgress them; this is a promise plainly given, and once given, not withdrawn.
+
+Though my pen now slows and the page grows scant, my regard for thee does not. Convey, I pray thee, my warmest regards to thy family, and may each of them enjoy good health and peace. Take care of thyself, and neglect not thy meals, for even the keenest mind falters in a hungry body. Shouldst thou be kindly inclined, I should be glad indeed to receive word from thee.
+
+I remain,
+Thy sincere and faithful friend,
+Sam`;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const strips = document.querySelectorAll('.strip');
+            const overlay = document.getElementById('open-overlay');
+            const letter = document.getElementById('letter');
+            const scene = document.getElementById('scene');
+            const waBtn = document.getElementById('wa-btn');
+            const sentinel = document.getElementById('sentinel');
+
+            // Inject Content
+            const bodyEl = document.getElementById('letter-body');
+            if (bodyEl) bodyEl.innerText = LETTER_BODY_CONTENT;
+
+            let tornCount = 0;
+
+            // Tearing Logic
+            strips.forEach(strip => {
+                let startX, startY;
+
+                const handleStart = (e) => {
+                    const touch = e.touches ? e.touches[0] : e;
+                    startX = touch.clientX;
+                    startY = touch.clientY;
+                    strip.dataset.dragging = "true";
+                };
+
+                const handleMove = (e) => {
+                    if (strip.dataset.dragging !== "true") return;
+
+                    const touch = e.touches ? e.touches[0] : e;
+                    const deltaX = Math.abs(touch.clientX - startX);
+                    const deltaY = Math.abs(touch.clientY - startY);
+                    const threshold = 30;
+
+                    if (deltaX > threshold || deltaY > threshold) {
+                        tearStrip(strip);
+                    }
+                };
+
+                const handleEnd = () => {
+                    strip.dataset.dragging = "false";
+                };
+
+                strip.addEventListener('mousedown', handleStart);
+                document.addEventListener('mousemove', handleMove);
+                document.addEventListener('mouseup', handleEnd);
+
+                strip.addEventListener('touchstart', handleStart);
+                document.addEventListener('touchmove', handleMove);
+                document.addEventListener('touchend', handleEnd);
+            });
+
+            function tearStrip(strip) {
+                if (strip.classList.contains('torn')) return;
+
+                strip.classList.add('torn');
+                tornCount++;
+
+                if (navigator.vibrate) navigator.vibrate(50);
+
+                if (tornCount === 3) {
+                    revealOpenOption();
+                }
+            }
+
+            function revealOpenOption() {
+                setTimeout(() => {
+                    overlay.classList.add('visible');
+                }, 500);
+            }
+
+            // Unfolding Logic
+            overlay.addEventListener('click', () => {
+                overlay.style.opacity = '0';
+
+                requestAnimationFrame(() => {
+                    letter.classList.add('is-open');
+
+                    setTimeout(() => {
+                        document.body.classList.add('reading-mode');
+                        scene.classList.add('is-open');
+
+                        // On mobile, scroll to top of letter or reset view
+                        window.scrollTo(0, 0);
+
+                        initScrollObserver();
+                    }, 1200);
+                });
+            });
+
+            function initScrollObserver() {
+                if (!sentinel) return;
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            waBtn.classList.add('visible');
+                        }
+                    });
+                }, { threshold: 0.1 }); // Trigger when 10% visible
+
+                observer.observe(sentinel);
+            }
+        });
+    </script>
+</body>
+
+</html>
