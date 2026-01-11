@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Indian Post Inland Letter Card</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Noto+Sans+Devanagari:wght@400;700&family=Arial+Narrow:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Noto+Sans+Devanagari:wght@400;700&family=Arial+Narrow:wght@400;700&family=Kalam:wght@400;700&display=swap');
 
         :root {
             /* Colors */
@@ -28,6 +28,7 @@
             --font-hindi: 'Noto Sans Devanagari', sans-serif;
             --font-english: 'Courier Prime', monospace;
             --font-narrow: 'Arial Narrow', sans-serif;
+            --font-handwriting: 'Kalam', cursive;
         }
 
         body {
@@ -44,7 +45,7 @@
 
         /* Mobile Reading Mode Adjustments */
         @media (max-width: 600px) {
-            .reading-mode body {
+            body.reading-mode {
                 background-color: #F0F8FF;
                 align-items: flex-start;
             }
@@ -449,7 +450,15 @@
             font-size: 1rem;
             line-height: 1.6;
             color: #1a1a1a;
+            color: #1a1a1a;
             white-space: pre-wrap;
+        }
+
+        #letter-body {
+            font-family: var(--font-handwriting);
+            font-size: 1.2rem;
+            /* Slightly larger for handwritten look */
+            line-height: 1.8;
         }
 
         .reading-mode .inner-content {
